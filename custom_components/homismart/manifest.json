@@ -1,0 +1,15 @@
+{
+  "domain": "homismart",
+  "name": "Home Assistant HomiSmart Integration",
+  "config_flow": true,
+  "documentation": "https://github.com/Krafman/ha-homismart",
+  "issue_tracker": "https://github.com/Krafman/ha-homismart/issues",
+  "codeowners": [
+    "@Krafman"
+  ],
+  "requirements": [
+    "homismart-client==0.1.0"
+  ],
+  "iot_class": "cloud_push",
+  "version": "0.1.0"
+}
