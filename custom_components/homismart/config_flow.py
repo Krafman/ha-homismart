@@ -26,8 +26,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> None:
-    """
-    Validate the user input allows us to connect and authenticate.
+    """Validate the user input allows us to connect and authenticate.
 
     Raises:
         AuthenticationError: If credentials are invalid.
@@ -37,37 +36,38 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> None:
         username=data[CONF_USERNAME],
         password=data[CONF_PASSWORD],
     )
+
     connect_task = None
+    login_event = asyncio.Event()
+    login_successful = {"ok": False}
+
+    # Define proper callbacks
+    def on_auth(username: str):
+        _LOGGER.info("Validation successful for user: %s", username)
+        login_successful["ok"] = True
+        login_event.set()
+
+    def on_error(error_details: dict):
+        _LOGGER.warning("Validation error: %s", error_details)
+        login_successful["ok"] = False
+        login_event.set()
+
+    # Register working callbacks
+    client.session.register_event_listener("session_authenticated", on_auth)
+    client.session.register_event_listener("session_error", on_error)
+
     try:
         connect_task = asyncio.create_task(client.connect())
-        login_event = asyncio.Event()
+        await asyncio.wait_for(login_event.wait(), timeout=30.0)
 
-        # Define callbacks for validation.
-        @_LOGGER.debug
-        def on_auth(username: str):
-            _LOGGER.info("Validation successful for user: %s", username)
-            login_event.set()
-
-        @_LOGGER.debug
-        def on_error(error_details: dict):
-            if error_details.get("type") == "authentication_failed":
-                _LOGGER.warning("Authentication failed during validation.")
-                login_event.set()  # Set event to stop waiting; auth has failed.
-
-        client.session.register_event_listener("session_authenticated", on_auth)
-        client.session.register_event_listener("session_error", on_error)
-
-        # Wait for authentication to complete or fail, with a timeout.
-        await asyncio.wait_for(login_event.wait(), timeout=20.0)
-
-        if not client.is_logged_in:
-            raise AuthenticationError("Validation failed: Client is not logged in.")
+        if not login_successful["ok"]:
+            raise AuthenticationError("Invalid credentials or server rejected login")
 
     except asyncio.TimeoutError as exc:
         _LOGGER.error("Timeout during credential validation.")
         raise ConnectionError("Timeout validating credentials") from exc
+
     finally:
-        # Clean up the temporary client and its tasks.
         if connect_task and not connect_task.done():
             connect_task.cancel()
         if client:
