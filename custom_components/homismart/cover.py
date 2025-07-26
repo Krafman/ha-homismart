@@ -5,11 +5,13 @@ import logging
 from typing import Any
 
 from homismart_client.devices import CurtainDevice
+from homismart_client.enums import DeviceType
 
 from homeassistant.components.cover import (
     ATTR_POSITION,
     CoverEntity,
     CoverEntityFeature,
+    CoverDeviceClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -69,6 +71,8 @@ class HomiSmartCover(HomiSmartEntity, CoverEntity):
         super().__init__(coordinator, device)
         # Type hint the device for this specific platform.
         self.device: CurtainDevice = device
+        if device.device_type_enum == DeviceType.SHUTTER:
+            self._attr_device_class = CoverDeviceClass.SHUTTER
 
     @property
     def current_cover_position(self) -> int | None:
