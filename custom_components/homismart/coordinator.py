@@ -4,13 +4,20 @@ import logging
 
 from homismart_client import HomismartClient
 from homismart_client.devices import CurtainDevice, HomismartDevice, SwitchableDevice
+from homismart_client.enums import DeviceType
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
-from .const import DOMAIN, SIGNAL_NEW_COVER, SIGNAL_NEW_LIGHT, SIGNAL_UPDATE_DEVICE
+from .const import (
+    DOMAIN,
+    SIGNAL_NEW_COVER,
+    SIGNAL_NEW_LIGHT,
+    SIGNAL_NEW_SWITCH,
+    SIGNAL_UPDATE_DEVICE,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -36,10 +43,27 @@ class HomiSmartCoordinator:
         _LOGGER.info("Discovered new HomiSmart device: %s", device)
         self.device_registry[device.id] = device
 
-        # Dispatch the device to the correct platform.
-        if isinstance(device, SwitchableDevice):
+        # Dispatch the device to the correct platform based on its type.
+        device_type = device.device_type_enum
+
+        if device_type is None:
+            # Fall back to instance checks when type is unknown.
+            if isinstance(device, SwitchableDevice):
+                async_dispatcher_send(self.hass, SIGNAL_NEW_LIGHT, device)
+            elif isinstance(device, CurtainDevice):
+                async_dispatcher_send(self.hass, SIGNAL_NEW_COVER, device)
+            return
+
+        if device_type in (
+            DeviceType.SOCKET,
+            DeviceType.DOUBLE_SWITCH_OR_SOCKET,
+            DeviceType.SOCKET_ALT,
+            DeviceType.SWITCH_MULTI_GANG_A,
+        ):
+            async_dispatcher_send(self.hass, SIGNAL_NEW_SWITCH, device)
+        elif device_type == DeviceType.SWITCH:
             async_dispatcher_send(self.hass, SIGNAL_NEW_LIGHT, device)
-        elif isinstance(device, CurtainDevice):
+        elif device_type in (DeviceType.CURTAIN, DeviceType.SHUTTER):
             async_dispatcher_send(self.hass, SIGNAL_NEW_COVER, device)
         # Add other device types (e.g., locks) here in the future.
 
