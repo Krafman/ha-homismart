@@ -1,7 +1,11 @@
-Home Assistant HomiSmart Integration
+#Home Assistant HomiSmart Integration
+![GitHub stars](https://img.shields.io/github/stars/krafman/ha-homismart?style=social)
+![GitHub last commit](https://img.shields.io/github/last-commit/krafman/ha-homismart)
+
+> ⚠️ **Disclaimer**: This is an unofficial, community-driven library. It is not affiliated with, authorized, or endorsed by Homismart or its parent company. Use at your own risk — changes to Homismart's API may break functionality without notice.
 This is a Home Assistant integration for HomiSmart devices. It allows you to control your HomiSmart lights, switches, and covers directly from Home Assistant.
 
-Features
+##Features
 Lights: Control on/off state of your HomiSmart lights.
 
 Switches: Control on/off state of your HomiSmart switches and sockets.
@@ -10,7 +14,7 @@ Covers: Control your HomiSmart curtains and shutters, including setting the posi
 
 Real-time updates: The integration uses a persistent connection to your HomiSmart account to receive real-time updates from your devices.
 
-Installation
+##Installation
 HACS (Home Assistant Community Store)
 Go to HACS.
 
