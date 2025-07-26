@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 
 from homismart_client.devices import SwitchableDevice
+from homismart_client.enums import DeviceType
 
 from homeassistant.components.light import LightEntity
 from homeassistant.config_entries import ConfigEntry
@@ -30,8 +31,9 @@ async def async_setup_entry(
     @callback
     def async_add_light(device: SwitchableDevice) -> None:
         """Add a new HomiSmart light entity."""
-        _LOGGER.info("Adding new light: %s", device.name)
-        async_add_entities([HomiSmartLight(coordinator, device)])
+        if device.device_type_enum == DeviceType.SWITCH:
+            _LOGGER.info("Adding new light: %s", device.name)
+            async_add_entities([HomiSmartLight(coordinator, device)])
 
     # Register a listener for new light devices.
     entry.async_on_unload(
@@ -40,7 +42,7 @@ async def async_setup_entry(
 
     # Add any lights that are already known by the coordinator.
     for device in coordinator.device_registry.values():
-        if isinstance(device, SwitchableDevice):
+        if isinstance(device, SwitchableDevice) and device.device_type_enum == DeviceType.SWITCH:
             async_add_light(device)
 
 
