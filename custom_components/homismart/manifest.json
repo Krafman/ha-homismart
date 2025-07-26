@@ -8,8 +8,8 @@
     "@Krafman"
   ],
   "requirements": [
-    "homismart-client==0.1.4"
+    "homismart-client==0.1.5"
   ],
   "iot_class": "cloud_push",
-  "version": "0.1.0"
+  "version": "0.1.5"
 }
