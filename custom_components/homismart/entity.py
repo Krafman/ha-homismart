@@ -48,8 +48,8 @@ class HomiSmartEntity(Entity):
 
     @property
     def available(self) -> bool:
-        """Return True if the device is online and available."""
-        return self.device.is_online
+        """Return True if the WebSocket is connected and the device is online."""
+        return self.coordinator.client.is_connected and self.device.is_online
 
     async def async_added_to_hass(self) -> None:
         """Register a callback for when the entity is added to hass."""
