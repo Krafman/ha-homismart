@@ -6,7 +6,7 @@ import logging
 from homismart_client.devices import SwitchableDevice
 from homismart_client.enums import DeviceType
 
-from homeassistant.components.light import LightEntity
+from homeassistant.components.light import ColorMode, LightEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
@@ -49,8 +49,9 @@ async def async_setup_entry(
 class HomiSmartLight(HomiSmartEntity, LightEntity):
     """Representation of a HomiSmart switchable device as a light."""
 
-    # Set entity name to None, so Home Assistant will use the device name.
     _attr_name = None
+    _attr_supported_color_modes = {ColorMode.ONOFF}
+    _attr_color_mode = ColorMode.ONOFF
 
     def __init__(
         self, coordinator: HomiSmartCoordinator, device: SwitchableDevice

@@ -37,41 +37,14 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> None:
         password=data[CONF_PASSWORD],
     )
 
-    connect_task = None
-    login_event = asyncio.Event()
-    login_successful = {"ok": False}
-
-    # Define proper callbacks
-    def on_auth(username: str):
-        _LOGGER.info("Validation successful for user: %s", username)
-        login_successful["ok"] = True
-        login_event.set()
-
-    def on_error(error_details: dict):
-        _LOGGER.warning("Validation error: %s", error_details)
-        login_successful["ok"] = False
-        login_event.set()
-
-    # Register working callbacks
-    client.session.register_event_listener("session_authenticated", on_auth)
-    client.session.register_event_listener("session_error", on_error)
-
     try:
-        connect_task = asyncio.create_task(client.connect())
-        await asyncio.wait_for(login_event.wait(), timeout=30.0)
-
-        if not login_successful["ok"]:
-            raise AuthenticationError("Invalid credentials or server rejected login")
-
+        await client.connect(timeout=30)
     except asyncio.TimeoutError as exc:
-        _LOGGER.error("Timeout during credential validation.")
         raise ConnectionError("Timeout validating credentials") from exc
-
+    except Exception as exc:
+        raise ConnectionError(f"Connection failed: {exc}") from exc
     finally:
-        if connect_task and not connect_task.done():
-            connect_task.cancel()
-        if client:
-            await client.disconnect()
+        await client.disconnect()
 
 
 class HomiSmartConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
