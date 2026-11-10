@@ -1,8 +1,10 @@
 name: Validate
 
+# One run per change: on pull requests, and on main after merging.
 on:
-  push:
   pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions: {}
