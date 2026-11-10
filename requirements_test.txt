@@ -1,0 +1,4 @@
+# Test dependencies. Keep homismart-client in step with manifest.json and
+# pytest-homeassistant with the minimum Home Assistant version in hacs.json.
+pytest-homeassistant==2026.11.1
+homismart-client==0.3.1

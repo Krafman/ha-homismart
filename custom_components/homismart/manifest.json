@@ -1,15 +1,22 @@
 {
   "domain": "homismart",
-  "name": "Home Assistant HomiSmart Integration",
-  "config_flow": true,
-  "documentation": "https://github.com/Krafman/ha-homismart",
-  "issue_tracker": "https://github.com/Krafman/ha-homismart/issues",
+  "name": "HomiSmart",
+  "categories": [
+    "hubs_protocols.smart_home_hubs"
+  ],
   "codeowners": [
     "@Krafman"
   ],
-  "requirements": [
-    "homismart-client==0.2.0"
-  ],
+  "config_flow": true,
+  "documentation": "https://github.com/Krafman/ha-homismart",
+  "integration_type": "hub",
   "iot_class": "cloud_push",
-  "version": "0.2.0"
+  "issue_tracker": "https://github.com/Krafman/ha-homismart/issues",
+  "loggers": [
+    "homismart_client"
+  ],
+  "requirements": [
+    "homismart-client==0.3.1"
+  ],
+  "version": "1.2.0"
 }

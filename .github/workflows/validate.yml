@@ -1,25 +1,51 @@
 name: Validate
 
+# One run per change: on pull requests, and on main after merging.
 on:
-  push:
   pull_request:
-#  schedule:
-#    - cron: "0 0 * * *"
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions: {}
 
 jobs:
   validate:
-    name: HASS and Hassfest Validation
-    runs-on: "ubuntu-latest"
+    name: HACS and Hassfest validation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: actions/checkout@v7
 
-      - name: HACS Action
+      - name: HACS validation
         uses: hacs/action@main
         with:
-          category: "integration"
+          category: integration
 
       - name: Hassfest validation
-        uses: "home-assistant/actions/hassfest@master"
+        uses: home-assistant/actions/hassfest@master
+
+  tests:
+    name: Tests (real Home Assistant)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - name: Check test pins match the manifest
+        run: |
+          python - <<'EOF'
+          import json, pathlib
+          manifest = json.loads(pathlib.Path("custom_components/homismart/manifest.json").read_text())
+          pins = pathlib.Path("requirements_test.txt").read_text().splitlines()
+          missing = [r for r in manifest["requirements"] if r not in pins]
+          assert not missing, f"requirements_test.txt is missing {missing}"
+          EOF
+      - name: Install
+        run: python -m pip install -r requirements_test.txt
+      - name: Run tests
+        run: python -m pytest
