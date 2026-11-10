@@ -25,7 +25,7 @@ async def test_cover_uses_home_assistant_direction(
     assert state.attributes[ATTR_CURRENT_POSITION] == 0
 
     await _call(hass, "cover", "set_cover_position", "cover.study_blinds", **{ATTR_POSITION: 25})
-    assert server.commands()[-1]["curtainState"] == "75"
+    assert server.commands()[-1]["curtainState"] == 75
     await wait_for(
         lambda: hass.states.get("cover.study_blinds").attributes[ATTR_CURRENT_POSITION] == 25
     )
@@ -34,7 +34,7 @@ async def test_cover_uses_home_assistant_direction(
     await _call(hass, "cover", "open_cover", "cover.study_blinds")
     await _call(hass, "cover", "close_cover", "cover.study_blinds")
     await _call(hass, "cover", "stop_cover", "cover.study_blinds")
-    assert [c["curtainState"] for c in server.commands()[-3:]] == ["0", "100", "99"]
+    assert [c["curtainState"] for c in server.commands()[-3:]] == [0, 100, 99]
 
 
 async def test_light_on_off(

@@ -27,7 +27,7 @@ HUB = {"id": HUB_ID, "pid": HUB_ID, "type": 0, "name": "Main Unit", "onLine": Tr
 DEVICES = [
     {"id": "01000000000001", "pid": HUB_ID, "type": 1, "name": "Lounge Socket", "onLine": True, "power": True},
     {"id": "02000000000001", "pid": HUB_ID, "type": 2, "name": "Hall light", "onLine": True, "power": False},
-    {"id": "04000000000001", "pid": HUB_ID, "type": 4, "name": "Study Blinds", "onLine": True, "curtainState": "100"},
+    {"id": "04000000000001", "pid": HUB_ID, "type": 4, "name": "Study Blinds", "onLine": True, "curtainState": 100, "lock": "1", "iconId": "25"},
     {"id": "06000000000001", "pid": HUB_ID, "type": 6, "name": "Boiler", "onLine": True, "power": False},
     {"id": f"{UNIT_ID}-1", "pid": HUB_ID, "type": 7, "relayNumber": 1, "deviceId": 101,
      "name": "Landing 1", "onLine": True, "power": True},
@@ -105,6 +105,8 @@ class FakeServer:
             conn.push("0005", self.hubs + list(self.devices.values()))
         elif prefix == "0006":  # control a device: the server pushes the new state
             device = self.devices[payload["id"]]
+            if not isinstance(payload.get("curtainState", 0), int):
+                return  # Like real shutters: a text curtainState is silently ignored.
             for key in ("power", "curtainState"):
                 if key in payload:
                     device[key] = payload[key]

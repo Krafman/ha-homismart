@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.1 — 2026-11-10
+
+Requires homismart-client 0.3.2.
+
+### Fixed
+- **Blinds that didn't respond now move.** Some HomiSmart shutters ignored the
+  position commands the integration sent; they're now sent exactly like the
+  official app sends them. Tests now use a fake server that ignores the old
+  format, the way those shutters do.
+
 ## 1.2.0 — 2026-11-10
 
 Requires Home Assistant 2026.11 and homismart-client 0.3.1.
