@@ -2,11 +2,13 @@
 
 ## 1.2.0 — unreleased
 
-Requires Home Assistant 2026.11 and homismart-client 0.3.0.
+Requires Home Assistant 2026.11 and homismart-client 0.3.1.
 
 ### Fixed
 - **New installs can connect again.** The integration now uses homismart-client
-  0.3.0; older client versions pointed at a HomiSmart server that no longer exists.
+  0.3.1; older client versions pointed at a HomiSmart server that no longer exists.
+- No more "blocking call" warning at startup: the connection uses Home
+  Assistant's shared TLS context.
 - **Cover positions use Home Assistant's direction** (0% closed, 100% open). They
   were reversed before, so check automations that set a position.
 - A wrong password now shows "Wrong email or password" immediately, instead of

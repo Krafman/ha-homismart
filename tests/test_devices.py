@@ -147,3 +147,33 @@ def test_split_gang_names() -> None:
     # Nothing in common, identical names, or a lone gang: keep the full names.
     for names in (["Dining room light", "Living room Light"], ["Garden", "Garden"], ["Porch 1"]):
         assert split_gang_names(names) == ("Two-gang switch", names)
+
+
+async def test_two_gang_unit_found_while_running(
+    hass: HomeAssistant, server: FakeServer, setup_integration: MockConfigEntry
+) -> None:
+    """A unit discovered after startup is named from both gangs, like at startup.
+
+    Entities are added eagerly, so announcing each gang the moment the client
+    reports it would name the unit from its first gang alone.
+    """
+    for relay in (1, 2):
+        server.devices[f"07000000000001-{relay}"] = {
+            "id": f"07000000000001-{relay}", "pid": HUB_ID, "type": 7, "relayNumber": relay,
+            "name": f"Porch {relay}", "onLine": True, "power": False,
+        }
+    server.current.push("0005", server.hubs + list(server.devices.values()))
+    await wait_for(lambda: hass.states.get("switch.porch_2") is not None)
+    await hass.async_block_till_done()
+
+    entry = setup_integration
+    dev_reg = dr.async_get(hass)
+    unit = _device(hass, entry, "07000000000001")
+    assert unit.name == "Porch"
+    names = [
+        dev_reg.async_get_child_device_by_identifier((DOMAIN, f"07000000000001-{relay}"), entry.entry_id).name
+        for relay in (1, 2)
+    ]
+    assert names == ["1", "2"]
+    # Home Assistant composes "<unit> <gang>" for the entity ID and the UI.
+    assert hass.states.get("switch.porch_1") is not None
