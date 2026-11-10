@@ -36,6 +36,8 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.14"
+      - name: No real home data
+        run: python scripts/check_example_data.py
       - name: Check test pins match the manifest
         run: |
           python - <<'EOF'

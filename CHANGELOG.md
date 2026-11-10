@@ -2,7 +2,7 @@
 
 ## 1.2.1 — 2026-11-10
 
-Requires homismart-client 0.3.2.
+Requires homismart-client 0.3.3.
 
 ### Fixed
 - **Blinds that didn't respond now move.** Some HomiSmart shutters ignored the
