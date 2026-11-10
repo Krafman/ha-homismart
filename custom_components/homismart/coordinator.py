@@ -18,6 +18,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.device_registry import ChildDeviceInfo, DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_send
+from homeassistant.util.ssl import get_default_context
 
 from .const import DOMAIN, MANUFACTURER, PLATFORMS, SIGNAL_NEW_DEVICE, SIGNAL_UPDATE_DEVICE
 
@@ -90,9 +91,12 @@ class HomiSmartCoordinator:
         self.client = HomismartClient(
             username=entry.data[CONF_USERNAME],
             password=entry.data[CONF_PASSWORD],
+            ssl_context=get_default_context(),
         )
         self.devices: dict[str, HomismartDevice] = {}
         self._hubs: dict[str, HomismartDevice] = {}
+        # Discovered devices not yet handed to their platform, see _announce_new_devices.
+        self._unannounced: dict[str, Platform] = {}
 
     @property
     def connected(self) -> bool:
@@ -100,8 +104,12 @@ class HomiSmartCoordinator:
         return self.client.is_connected
 
     def devices_for(self, platform: Platform) -> list[HomismartDevice]:
-        """Return the known devices that belong to a platform."""
-        return [d for d in self.devices.values() if platform_for(d) == platform]
+        """Return the announced devices that belong to a platform."""
+        return [
+            device
+            for device_id, device in self.devices.items()
+            if device_id not in self._unannounced and platform_for(device) == platform
+        ]
 
     async def async_connect(self) -> None:
         """Connect to HomiSmart. Raises AuthenticationError on bad credentials."""
@@ -128,13 +136,28 @@ class HomiSmartCoordinator:
 
     @callback
     def _handle_new_device(self, device: HomismartDevice) -> None:
-        """Track a newly discovered device and hand it to its platform."""
+        """Track a newly discovered device; it is announced once the list is in."""
         if (platform := platform_for(device)) is None:
             _LOGGER.debug("No Home Assistant platform for %s", device)
             return
         self.devices[device.id] = device
         self._remove_stale_entities(device.id, keep=platform)
-        async_dispatcher_send(self.hass, SIGNAL_NEW_DEVICE.format(platform), device)
+        if not self._unannounced:
+            self.hass.loop.call_soon(self._announce_new_devices)
+        self._unannounced[device.id] = platform
+
+    @callback
+    def _announce_new_devices(self) -> None:
+        """Hand newly discovered devices to their platforms.
+
+        The client reports a device list one device at a time, and entities
+        are added eagerly. Waiting until the whole list is processed means a
+        multi-gang unit is named from all of its gangs, not just the first.
+        """
+        unannounced, self._unannounced = self._unannounced, {}
+        for device_id, platform in unannounced.items():
+            if (device := self.devices.get(device_id)) is not None:
+                async_dispatcher_send(self.hass, SIGNAL_NEW_DEVICE.format(platform), device)
 
     @callback
     def _handle_device_update(self, device: HomismartDevice) -> None:

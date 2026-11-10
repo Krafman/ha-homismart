@@ -88,7 +88,7 @@ class FakeServer:
     def current(self) -> FakeConnection:
         return self.connections[-1]
 
-    async def connect(self, url: str, open_timeout: float | None = None) -> FakeConnection:
+    async def connect(self, url: str, open_timeout: float | None = None, ssl: Any = None) -> FakeConnection:
         if not self.reachable:
             raise OSError("HomiSmart unreachable")
         connection = FakeConnection(self)
