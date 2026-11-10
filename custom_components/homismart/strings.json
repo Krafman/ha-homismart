@@ -1,0 +1,30 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect your HomiSmart account",
+        "description": "Use the same email and password as the HomiSmart app.",
+        "data": {
+          "username": "Email",
+          "password": "Password"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-enter your HomiSmart password",
+        "description": "HomiSmart no longer accepts the saved password for {username}. Enter the current one.",
+        "data": {
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Wrong email or password.",
+      "cannot_connect": "Could not reach the HomiSmart server. Check your internet connection and try again.",
+      "unknown": "Unexpected error. Check the Home Assistant log for details."
+    },
+    "abort": {
+      "already_configured": "This HomiSmart account is already set up.",
+      "reauth_successful": "Password updated. HomiSmart is reconnecting."
+    }
+  }
+}

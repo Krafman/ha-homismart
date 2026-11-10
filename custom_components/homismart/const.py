@@ -1,13 +1,10 @@
 """Constants for the HomiSmart integration."""
+from homeassistant.const import Platform
 
-# The domain of the integration.
 DOMAIN = "homismart"
+MANUFACTURER = "HomiSmart"
 
-# The platforms to be set up.
-PLATFORMS = ["light", "cover", "switch"]
+PLATFORMS = [Platform.COVER, Platform.LIGHT, Platform.SWITCH]
 
-# Signals for the dispatcher.
-SIGNAL_NEW_LIGHT = "homismart_new_light"
-SIGNAL_NEW_COVER = "homismart_new_cover"
-SIGNAL_NEW_SWITCH = "homismart_new_switch"
-SIGNAL_UPDATE_DEVICE = "homismart_update"
+SIGNAL_UPDATE_DEVICE = "homismart_update_{}"
+SIGNAL_NEW_DEVICE = "homismart_new_{}"

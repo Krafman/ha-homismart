@@ -1,66 +1,64 @@
-# Home Assistant HomiSmart Integration
-![GitHub stars](https://img.shields.io/github/stars/krafman/ha-homismart?style=social)
-![GitHub last commit](https://img.shields.io/github/last-commit/krafman/ha-homismart)
-[![HACS](https://img.shields.io/badge/HACS-Default-orange.svg?logo=HomeAssistantCommunityStore&logoColor=white)](https://github.com/hacs/integration)
+# HomiSmart for Home Assistant
 
+![GitHub release](https://img.shields.io/github/v/release/krafman/ha-homismart)
+![Validate](https://github.com/krafman/ha-homismart/actions/workflows/validate.yml/badge.svg)
 
-> ⚠️ **Disclaimer**: This is an unofficial, community-driven library. It is not affiliated with, authorized, or endorsed by Homismart or its parent company. Use at your own risk — changes to Homismart's API may break functionality without notice.
-This is a Home Assistant integration for HomiSmart devices. It allows you to control your HomiSmart lights, switches, and covers directly from Home Assistant.
+> ⚠️ **Disclaimer**: This is an unofficial, community-driven integration. It is not affiliated with, authorized, or endorsed by Homismart or its parent company. Use at your own risk — changes to Homismart's API may break functionality without notice.
+
+Control HomiSmart lights, switches, sockets, curtains and shutters from Home Assistant. Built on the [homismart-client](https://github.com/Krafman/homismart-client) library.
 
 ## Features
-- Lights: Control on/off state of your HomiSmart lights.
 
-- Switches: Control on/off state of your HomiSmart switches and sockets.
+- **Lights** (HomiSmart wall light switches): on/off.
+- **Switches** (sockets, water heater switches, and each gang of a two-gang switch): on/off.
+- **Covers** (curtains and shutters): open, close, stop and set position.
+- **Live updates**: changes made in the HomiSmart app or on the wall show up immediately.
+- **Devices that match the hardware**: everything sits under your HomiSmart hub, and the two gangs of a two-gang switch are grouped under one physical switch (each gang can still have its own area).
+- **Self-healing connection**: if the connection drops, devices show as unavailable and come back automatically when it reconnects.
+- **Password changes**: if HomiSmart stops accepting the saved password, Home Assistant asks you to re-enter it.
+- Devices removed from your HomiSmart account are removed from Home Assistant.
+- **Diagnostics**: download them from the integration page when reporting a problem (your email and password are redacted).
 
-- Covers: Control your HomiSmart curtains and shutters, including setting the position.
-
-- Real-time updates: The integration uses a persistent connection to your HomiSmart account to receive real-time updates from your devices.
+Requires **Home Assistant 2026.11** or newer.
 
 ## Installation
-HACS (Home Assistant Community Store)
-Go to HACS.
 
-Go to "Integrations".
+### Marketplace (recommended)
 
-Click the three dots in the top right and select "Custom repositories".
+1. Go to **Settings → Marketplace**, open the menu (⋮) and choose **Add from link**.
+2. Enter `Krafman/ha-homismart` and choose **Integration**.
+3. Install **HomiSmart**. You land straight in its setup.
 
-Add the URL to this repository in the "Repository" field.
+If you used HACS before Home Assistant 2026.11, there's nothing to do: Home Assistant moved your HACS installs into the Marketplace, and updates keep coming.
 
-Select "Integration" as the category.
+### Manual
 
-Click "ADD".
+Copy `custom_components/homismart` into the `custom_components` folder of your Home Assistant configuration and restart Home Assistant.
 
-Find the "Home Assistant HomiSmart Integration" card and click "INSTALL".
+## Setup
 
-Follow the instructions on screen to complete the installation.
+1. Go to **Settings → Devices & services → Add integration** and search for **HomiSmart**.
+2. Enter the email and password you use in the HomiSmart app.
 
-Manual Installation
-Copy the homismart folder from custom_components in this repository to the custom_components folder in your Home Assistant configuration directory.
+Your devices are discovered automatically.
 
-Restart Home Assistant.
+## Notes
 
-Configuration
-Go to Settings -> Devices & Services.
+- **Cover positions** follow Home Assistant's convention: 0% is closed and 100% is open. (The HomiSmart app counts the other way; the integration converts.) Before version 1.2.0 positions were reversed, so check automations that set a position.
+- **Two-gang switches** show as switches. To treat a gang as a light, use **Show as → Light** in the entity's settings.
+- This is a cloud integration: it needs internet access to HomiSmart's servers.
 
-Click the + ADD INTEGRATION button.
+## Development
 
-Search for "HomiSmart".
+Tests run the real client library against a fake HomiSmart server inside a real Home Assistant, using Home Assistant's own [pytest-homeassistant](https://github.com/home-assistant/core/tree/dev/packages/pytest-homeassistant) package (Python 3.14):
 
-Enter your HomiSmart username and password.
+```bash
+pip install -r requirements_test.txt
+pytest
+```
 
-Click Submit.
-
-The integration will automatically discover your HomiSmart devices.
-
-## Supported Devices
-This integration supports the following device types:
-
-- Lights
-
-- Covers (Curtains and Shutters)
-
-- Switches (Sockets and Multi-gang switches)
+CI also runs the HACS and hassfest checks.
 
 ## License
-This project is licensed under the MIT License. See the LICENSE file for details.
 
+MIT. See [LICENSE](LICENSE).

@@ -1,7 +1,6 @@
-"""Cover platform for the HomiSmart integration."""
+"""Cover platform for the HomiSmart integration: curtains and shutters."""
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 from homismart_client.devices import CurtainDevice
@@ -9,54 +8,35 @@ from homismart_client.enums import DeviceType
 
 from homeassistant.components.cover import (
     ATTR_POSITION,
+    CoverDeviceClass,
     CoverEntity,
     CoverEntityFeature,
-    CoverDeviceClass,
 )
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.const import Platform
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN
-from .coordinator import HomiSmartCoordinator, SIGNAL_NEW_COVER
-from .entity import HomiSmartEntity
-
-_LOGGER = logging.getLogger(__name__)
+from .coordinator import HomiSmartConfigEntry, HomiSmartCoordinator
+from .entity import HomiSmartEntity, async_setup_platform
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: HomiSmartConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Set up the HomiSmart cover platform."""
-    coordinator: HomiSmartCoordinator = hass.data[DOMAIN][entry.entry_id]
-
-    # Callback to add a new cover entity.
-    @callback
-    def async_add_cover(device: CurtainDevice) -> None:
-        """Add a new HomiSmart cover entity."""
-        _LOGGER.info("Adding new cover: %s", device.name)
-        async_add_entities([HomiSmartCover(coordinator, device)])
-
-    # Register a listener for new cover devices.
-    entry.async_on_unload(
-        async_dispatcher_connect(hass, SIGNAL_NEW_COVER, async_add_cover)
-    )
-
-    # Add any covers that are already known by the coordinator.
-    for device in coordinator.device_registry.values():
-        if isinstance(device, CurtainDevice):
-            async_add_cover(device)
+    """Set up HomiSmart covers."""
+    async_setup_platform(hass, entry, async_add_entities, Platform.COVER, HomiSmartCover)
 
 
-class HomiSmartCover(HomiSmartEntity, CoverEntity):
-    """Representation of a HomiSmart curtain/blind device as a cover."""
+class HomiSmartCover(HomiSmartEntity[CurtainDevice], CoverEntity):
+    """A HomiSmart curtain or shutter.
 
-    # Set entity name to None, so Home Assistant will use the device name.
-    _attr_name = None
-    # Define the supported features for this cover entity.
+    Home Assistant positions run 0 = closed to 100 = open; HomiSmart counts the
+    other way. The client's open_percentage / set_open_percentage convert, so
+    this entity only deals in Home Assistant's convention.
+    """
+
     _attr_supported_features = (
         CoverEntityFeature.OPEN
         | CoverEntityFeature.CLOSE
@@ -64,27 +44,25 @@ class HomiSmartCover(HomiSmartEntity, CoverEntity):
         | CoverEntityFeature.STOP
     )
 
-    def __init__(
-        self, coordinator: HomiSmartCoordinator, device: CurtainDevice
-    ) -> None:
+    def __init__(self, coordinator: HomiSmartCoordinator, device: CurtainDevice) -> None:
         """Initialize the cover."""
         super().__init__(coordinator, device)
-        # Type hint the device for this specific platform.
-        self.device: CurtainDevice = device
-        if device.device_type_enum == DeviceType.SHUTTER:
-            self._attr_device_class = CoverDeviceClass.SHUTTER
+        self._attr_device_class = (
+            CoverDeviceClass.SHUTTER
+            if device.device_type_enum == DeviceType.SHUTTER
+            else CoverDeviceClass.CURTAIN
+        )
 
     @property
     def current_cover_position(self) -> int | None:
-        """Return the current position of the cover (0-100)."""
-        return self.device.current_level
+        """Return how far the cover is open (0 = closed, 100 = open)."""
+        return self.device.open_percentage
 
     @property
     def is_closed(self) -> bool | None:
-        """Return true if the cover is closed, None if position is unknown."""
-        if self.device.current_level is None:
-            return None
-        return self.device.current_level == 100
+        """Return True if fully closed, None if the position is unknown."""
+        position = self.device.open_percentage
+        return None if position is None else position == 0
 
     async def async_open_cover(self, **kwargs: Any) -> None:
         """Open the cover."""
@@ -95,10 +73,9 @@ class HomiSmartCover(HomiSmartEntity, CoverEntity):
         await self.device.close_fully()
 
     async def async_set_cover_position(self, **kwargs: Any) -> None:
-        """Move the cover to a specific position."""
-        position = kwargs[ATTR_POSITION]
-        await self.device.set_level(position)
+        """Move the cover to a position (0 = closed, 100 = open)."""
+        await self.device.set_open_percentage(kwargs[ATTR_POSITION])
 
     async def async_stop_cover(self, **kwargs: Any) -> None:
-        """Stop the cover's movement."""
+        """Stop the cover."""
         await self.device.stop()
