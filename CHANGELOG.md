@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.0 — unreleased
+## 1.2.0 — 2026-11-10
 
 Requires Home Assistant 2026.11 and homismart-client 0.3.1.
 
