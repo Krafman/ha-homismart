@@ -1,34 +1,32 @@
 """The HomiSmart integration."""
 from __future__ import annotations
 
-from homeassistant.config_entries import ConfigEntry
+from homismart_client import AuthenticationError
+
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 
-from .const import DOMAIN, PLATFORMS
-from .coordinator import HomiSmartCoordinator
+from .const import PLATFORMS
+from .coordinator import HomiSmartConfigEntry, HomiSmartCoordinator
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up HomiSmart from a config entry."""
+async def async_setup_entry(hass: HomeAssistant, entry: HomiSmartConfigEntry) -> None:
+    """Connect to HomiSmart and set up the platforms."""
     coordinator = HomiSmartCoordinator(hass, entry)
-
     try:
-        await coordinator.connect()
-    except Exception as exc:
-        raise ConfigEntryNotReady(
-            f"Failed to connect to HomiSmart: {exc}"
-        ) from exc
+        await coordinator.async_connect()
+    except AuthenticationError as err:
+        await coordinator.async_disconnect()
+        raise ConfigEntryAuthFailed(str(err)) from err  # Prompts re-authentication.
+    except Exception as err:
+        await coordinator.async_disconnect()
+        raise ConfigEntryNotReady(f"Failed to connect to HomiSmart: {err}") from err
 
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
+    entry.runtime_data = coordinator
+    entry.async_on_unload(coordinator.async_disconnect)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload a HomiSmart config entry."""
-    if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        coordinator: HomiSmartCoordinator = hass.data[DOMAIN].pop(entry.entry_id)
-        await coordinator.disconnect()
-
-    return unload_ok
+async def async_unload_entry(hass: HomeAssistant, entry: HomiSmartConfigEntry) -> None:
+    """Unload the platforms; the connection closes via async_on_unload."""
+    await hass.config_entries.async_unload_platforms_or_raise(entry, PLATFORMS)
