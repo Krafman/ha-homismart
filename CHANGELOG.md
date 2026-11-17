@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.2.2 — 2026-11-17
+
+Requires homismart-client 0.3.4.
+
+### Security
+- **Debug logs no longer contain your HomiSmart credentials.** With "Enable
+  debug logging" on, earlier versions wrote the login's password hash (usable
+  in place of the password) to the log. Your email and name are no longer
+  logged either.
+- Diagnostics redact personal fields inside device data too, such as who
+  shared a device with you.
+
+If you posted HomiSmart debug logs publicly, change your HomiSmart password.
+
 ## 1.2.1 — 2026-11-10
 
 Requires homismart-client 0.3.3.
