@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.2.2 — 2026-11-17
+
+Requires homismart-client 0.3.4.
+
+### Security
+- **Debug logs no longer contain your HomiSmart credentials.** With "Enable
+  debug logging" on, earlier versions wrote the login's password hash (usable
+  in place of the password) to the log. Your email and name are no longer
+  logged either.
+- Diagnostics redact personal fields inside device data too, such as who
+  shared a device with you.
+
+- Device and room names are no longer written to logs or diagnostics.
+- HomiSmart's terms and conditions are never accepted on your behalf; if
+  HomiSmart asks, a warning tells you to accept them in the HomiSmart app.
+
+If you posted HomiSmart debug logs publicly, change your HomiSmart password.
+
+### Fixed
+- The same account can't be added twice with different capitalization of the
+  email; existing entries are migrated automatically.
+- A transient empty device list from HomiSmart no longer removes devices.
+- Server redirects are only followed to HomiSmart hosts.
+- Setup only retries for connection problems; unexpected errors are reported
+  instead of retried forever, and the setup form shows them as "unknown".
+
 ## 1.2.1 — 2026-11-10
 
 Requires homismart-client 0.3.3.

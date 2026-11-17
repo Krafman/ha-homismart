@@ -1,6 +1,9 @@
 """The setup and re-authentication forms."""
 from __future__ import annotations
 
+import hashlib
+from unittest.mock import patch
+
 from pytest_homeassistant.common import MockConfigEntry
 
 from homeassistant.config_entries import SOURCE_USER
@@ -62,7 +65,7 @@ async def test_reauth_flow_updates_password(
     hass: HomeAssistant, server: FakeServer, config_entry: MockConfigEntry
 ) -> None:
     """Re-authentication checks the new password and stores it."""
-    server.password_hash = __import__("hashlib").md5(b"new-password").hexdigest()
+    server.password_hash = hashlib.md5(b"new-password").hexdigest()
     result = await config_entry.start_reauth_flow(hass)
     assert result["step_id"] == "reauth_confirm"
     assert result["description_placeholders"]["username"] == USERNAME
@@ -80,3 +83,22 @@ async def test_reauth_flow_updates_password(
     assert config_entry.data[CONF_PASSWORD] == "new-password"
     await hass.async_block_till_done()
     await hass.config_entries.async_unload(config_entry.entry_id)
+
+
+async def test_same_account_with_different_casing_is_a_duplicate(
+    hass: HomeAssistant, server: FakeServer, config_entry: MockConfigEntry
+) -> None:
+    """The account is identified case-insensitively, so it can't be added twice."""
+    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": SOURCE_USER})
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_USERNAME: "  " + USERNAME.upper(), CONF_PASSWORD: PASSWORD}
+    )
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "already_configured"
+
+
+async def test_unexpected_error_shows_unknown(hass: HomeAssistant, server: FakeServer) -> None:
+    """A bug (not a connection problem) is reported as 'unknown' and logged."""
+    with patch("homismart_client.HomismartClient.connect", side_effect=RuntimeError("bug")):
+        result = await _submit_user_form(hass, PASSWORD)
+    assert result["errors"] == {"base": "unknown"}

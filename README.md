@@ -47,6 +47,8 @@ Your devices are discovered automatically.
 - **Cover positions** follow Home Assistant's convention: 0% is closed and 100% is open. (The HomiSmart app counts the other way; the integration converts.) Before version 1.2.0 positions were reversed, so check automations that set a position.
 - **Two-gang switches** show as switches. To treat a gang as a light, use **Show as → Light** in the entity's settings.
 - This is a cloud integration: it needs internet access to HomiSmart's servers.
+- Add each home's HomiSmart account once. Devices shared between two accounts
+  should only be added through one of them.
 
 ## Development
 

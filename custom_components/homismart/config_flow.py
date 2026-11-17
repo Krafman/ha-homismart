@@ -6,10 +6,12 @@ import logging
 from typing import Any
 
 import voluptuous as vol
-from homismart_client import AuthenticationError, HomismartClient
+from homismart_client import AuthenticationError, HomismartClient, HomismartError
+from websockets.exceptions import WebSocketException
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
+from homeassistant.util.ssl import get_default_context
 
 from .const import DOMAIN
 
@@ -21,10 +23,17 @@ USER_SCHEMA = vol.Schema(
 REAUTH_SCHEMA = vol.Schema({vol.Required(CONF_PASSWORD): str})
 
 
+def account_unique_id(username: str) -> str:
+    """Return the config entry unique ID for a HomiSmart account (its email)."""
+    return username.strip().lower()
+
+
 async def async_validate_login(username: str, password: str) -> dict[str, str]:
     """Try to log in; return form errors, or an empty dict if it worked."""
     try:
-        client = HomismartClient(username=username, password=password)
+        client = HomismartClient(
+            username=username, password=password, ssl_context=get_default_context()
+        )
     except Exception:
         _LOGGER.exception("Unexpected error creating the HomiSmart client")
         return {"base": "unknown"}
@@ -32,9 +41,12 @@ async def async_validate_login(username: str, password: str) -> dict[str, str]:
         await client.connect(timeout=30)
     except AuthenticationError:
         return {"base": "invalid_auth"}
-    except Exception as err:  # Timeouts, DNS, TLS, WebSocket errors.
+    except (TimeoutError, OSError, WebSocketException, HomismartError) as err:
         _LOGGER.debug("Could not connect to HomiSmart: %s", err)
         return {"base": "cannot_connect"}
+    except Exception:
+        _LOGGER.exception("Unexpected error while checking the HomiSmart login")
+        return {"base": "unknown"}
     finally:
         await client.disconnect()
     return {}
@@ -44,6 +56,7 @@ class HomiSmartConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for HomiSmart."""
 
     VERSION = 1
+    MINOR_VERSION = 2
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -52,7 +65,7 @@ class HomiSmartConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
         if user_input is not None:
             # One entry per HomiSmart account.
-            await self.async_set_unique_id(user_input[CONF_USERNAME])
+            await self.async_set_unique_id(account_unique_id(user_input[CONF_USERNAME]))
             self._abort_if_unique_id_configured()
             errors = await async_validate_login(
                 user_input[CONF_USERNAME], user_input[CONF_PASSWORD]

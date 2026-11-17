@@ -23,6 +23,9 @@ async def test_diagnostics_redact_credentials(
     assert data["connection"] == {"connected": True, "logged_in": True}
     assert {d["raw"]["id"] for d in data["devices"]} >= {"04000000000001"}
     assert "correct-password" not in json.dumps(data, default=str)
+    # Personal fields inside device data, e.g. who shared a device, are redacted too.
+    assert "sharer@example.com" not in json.dumps(data, default=str)
+    assert "**REDACTED**" in json.dumps(data["devices"])
 
 
 def test_translations_match_strings() -> None:

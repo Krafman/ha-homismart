@@ -16,7 +16,7 @@
     "homismart_client"
   ],
   "requirements": [
-    "homismart-client==0.3.3"
+    "homismart-client==0.3.4"
   ],
-  "version": "1.2.1"
+  "version": "1.2.2"
 }

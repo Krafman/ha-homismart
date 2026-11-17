@@ -25,7 +25,8 @@ UNIT_ID = "07000000000002"
 # Shaped like a real account (IDs and fields as the server sends them).
 HUB = {"id": HUB_ID, "pid": HUB_ID, "type": 0, "name": "Main Unit", "onLine": True, "version": 9}
 DEVICES = [
-    {"id": "01000000000001", "pid": HUB_ID, "type": 1, "name": "Lounge Socket", "onLine": True, "power": True},
+    {"id": "01000000000001", "pid": HUB_ID, "type": 1, "name": "Lounge Socket", "onLine": True, "power": True,
+     "shared": True, "sharedBy": "sharer@example.com"},
     {"id": "02000000000001", "pid": HUB_ID, "type": 2, "name": "Hall light", "onLine": True, "power": False},
     {"id": "04000000000001", "pid": HUB_ID, "type": 4, "name": "Study Blinds", "onLine": True, "curtainState": 100, "lock": "1", "iconId": "25"},
     {"id": "06000000000001", "pid": HUB_ID, "type": 6, "name": "Boiler", "onLine": True, "power": False},

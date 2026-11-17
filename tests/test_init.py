@@ -68,3 +68,24 @@ async def test_password_changed_while_running_starts_reauth(
     await wait_for(lambda: hass.config_entries.flow.async_progress_by_handler("homismart"))
     flow = hass.config_entries.flow.async_progress_by_handler("homismart")[0]
     assert flow["context"]["source"] == SOURCE_REAUTH
+
+
+async def test_migrates_unique_id_to_lower_case(hass: HomeAssistant, server: FakeServer) -> None:
+    """Entries from 1.2.1 and earlier get a normalized unique ID."""
+    from custom_components.homismart.const import DOMAIN
+    from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
+
+    from .conftest import PASSWORD, USERNAME
+
+    entry = MockConfigEntry(
+        domain=DOMAIN, title=USERNAME, unique_id="User@Example.COM", version=1, minor_version=1,
+        data={CONF_USERNAME: USERNAME, CONF_PASSWORD: PASSWORD},
+    )
+    entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert entry.state is ConfigEntryState.LOADED
+    assert (entry.unique_id, entry.minor_version) == ("user@example.com", 2)
+    await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()
